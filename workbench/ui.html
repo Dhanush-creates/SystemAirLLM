@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sovereign Workbench</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230b6e8f'/%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f3f5f7; --panel: #ffffff; --side: #10202b; --side-text: #c9d6de; --side-active: #1d3a4c;
+    --text: #17212b; --muted: #5d6b78; --line: #dde3e8; --accent: #0b6e8f; --accent-text: #ffffff;
+    --ok: #1b7f4b; --ok-bg: #e4f4ea; --bad: #b3261e; --bad-bg: #fbe9e7; --warn: #8a5a00; --warn-bg: #fdf1d8;
+    --code: #f0f3f6; --user: #e3eff5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f161c; --panel: #17212a; --side: #0a1117; --side-text: #a9b8c3; --side-active: #1b2c39;
+      --text: #e4eaef; --muted: #93a2ae; --line: #2a3742; --accent: #3aa6c9; --accent-text: #06141b;
+      --ok: #5fd094; --ok-bg: #143324; --bad: #ff8a80; --bad-bg: #3b1a17; --warn: #f0c36a; --warn-bg: #3a2d10;
+      --code: #101920; --user: #1c3340;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text);
+         display: grid; grid-template-columns: 220px 1fr; height: 100vh; }
+  aside { background: var(--side); color: var(--side-text); display: flex; flex-direction: column; padding: 16px 0; }
+  .brand { padding: 0 18px 16px; color: #fff; font-weight: 600; font-size: 15px; letter-spacing: .2px; }
+  .brand small { display: block; font-weight: 400; font-size: 11px; color: var(--side-text); margin-top: 2px; }
+  nav button { display: block; width: 100%; text-align: left; padding: 10px 18px; background: none; border: 0;
+               border-left: 3px solid transparent; color: inherit; font: inherit; cursor: pointer; }
+  nav button:hover { background: var(--side-active); }
+  nav button.on { background: var(--side-active); border-left-color: var(--accent); color: #fff; }
+  .side-foot { margin-top: auto; padding: 12px 18px 0; font-size: 11px; line-height: 1.4; }
+  main { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 20px;
+           background: var(--panel); border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+          font-size: 12px; font-weight: 600; cursor: pointer; border: 0; }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.bad { background: var(--bad-bg); color: var(--bad); }
+  .view { display: none; flex: 1; overflow: auto; padding: 20px; }
+  .view.on { display: block; }
+  #v-work.on { display: flex; flex-direction: column; padding: 0; }
+  #thread { flex: 1; overflow: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .empty { margin: auto; text-align: center; color: var(--muted); max-width: 520px; }
+  .empty h2 { color: var(--text); font-size: 18px; margin: 0 0 6px; }
+  .examples { display: grid; gap: 8px; margin-top: 16px; }
+  .examples button { text-align: left; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line);
+                     border-radius: 8px; color: var(--text); font: inherit; cursor: pointer; }
+  .examples button:hover { border-color: var(--accent); }
+  .msg { max-width: 900px; width: 100%; margin: 0 auto; }
+  .user { background: var(--user); border-radius: 10px; padding: 10px 14px; white-space: pre-wrap; }
+  .run { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .run-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .chip { padding: 2px 8px; border-radius: 6px; font-size: 12px; background: var(--code); color: var(--muted); }
+  .chip.model { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .reason { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+  .plan { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; margin-top: 2px; }
+  .stage { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-weight: 600; }
+  .stage.active { border-color: var(--accent); color: var(--accent); }
+  .stage.done { background: var(--ok-bg); border-color: transparent; color: var(--ok); }
+  .stage.bad { background: var(--bad-bg); border-color: transparent; color: var(--bad); }
+  .agent-head { margin: 10px 0 2px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13px; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+  .steps > .agent-head:first-child { border-top: 0; margin-top: 2px; padding-top: 2px; }
+  .steps { padding: 6px 14px; }
+  details { border-bottom: 1px dashed var(--line); padding: 6px 0; }
+  details:last-child { border-bottom: 0; }
+  summary { cursor: pointer; font-size: 13px; }
+  summary .tag { display: inline-block; min-width: 76px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--accent); }
+  summary .tag.warn { color: var(--warn); } summary .tag.bad { color: var(--bad); }
+  pre { margin: 6px 0 2px; padding: 8px 10px; background: var(--code); border-radius: 6px; overflow: auto;
+        font: 12px/1.45 Consolas, ui-monospace, monospace; white-space: pre-wrap; word-break: break-word; max-height: 320px; }
+  .answer { padding: 12px 14px; border-top: 1px solid var(--line); white-space: pre-wrap; }
+  .answer.err { color: var(--bad); }
+  .outputs { padding: 10px 14px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .outputs a, .btn { display: inline-block; padding: 6px 12px; border-radius: 6px; background: var(--accent); color: var(--accent-text);
+                     text-decoration: none; font: inherit; font-weight: 600; font-size: 13px; border: 0; cursor: pointer; }
+  .btn.ghost { background: none; color: var(--accent); border: 1px solid var(--line); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .busy { padding: 8px 14px; color: var(--muted); font-size: 13px; }
+  .composer { border-top: 1px solid var(--line); background: var(--panel); padding: 12px 20px; }
+  .composer-in { max-width: 900px; margin: 0 auto; }
+  .attach { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .attach span { background: var(--code); border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+  .attach span button { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 0 0 6px; }
+  .row { display: flex; gap: 8px; align-items: flex-end; }
+  textarea, input[type=text] { flex: 1; padding: 10px; font: inherit; color: var(--text); background: var(--bg);
+                               border: 1px solid var(--line); border-radius: 8px; }
+  textarea { min-height: 58px; resize: vertical; }
+  h2.title { font-size: 16px; margin: 0 0 4px; } p.sub { margin: 0 0 16px; color: var(--muted); max-width: 760px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+  .card h3 { margin: 0 0 10px; font-size: 14px; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  td.mono { font-family: Consolas, ui-monospace, monospace; font-size: 12px; word-break: break-word; }
+  .warnc { color: var(--warn); font-weight: 600; }
+  .yes { color: var(--ok); font-weight: 600; } .no { color: var(--bad); font-weight: 600; } .dim { color: var(--muted); }
+  .big { font-size: 20px; font-weight: 600; } .big.ok { color: var(--ok); } .big.bad { color: var(--bad); }
+  .stats { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 8px; color: var(--muted); font-size: 13px; }
+  .stats b { color: var(--text); }
+  @media (max-width: 760px) { body { grid-template-columns: 1fr; } aside { display: none; } }
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand">Sovereign Workbench<small>On-premise agentic AI</small></div>
+  <nav id="nav">
+    <button data-v="work" class="on">Workbench</button>
+    <button data-v="kb">Knowledge base</button>
+    <button data-v="agents">Agents</button>
+    <button data-v="models">Models</button>
+    <button data-v="net">Network monitor</button>
+    <button data-v="audit">Audit log</button>
+    <button data-v="check">System check</button>
+  </nav>
+  <div class="side-foot">All models, files and searches run on this machine.</div>
+</aside>
+<main>
+  <header>
+    <h1 id="heading">Workbench</h1>
+    <span style="display:flex;gap:10px;align-items:center">
+      <button class="btn ghost" id="newchat" title="Start a new conversation with no memory of this one">New chat</button>
+      <button class="pill ok" id="pill" title="Open the network monitor">Checking network…</button>
+    </span>
+  </header>
+
+  <section class="view on" id="v-work">
+    <div id="thread">
+      <div class="empty" id="empty">
+        <h2>What do you need done?</h2>
+        <div>Describe the task and attach files if needed: scanned PDFs, photos, drawings, Word, Excel or PowerPoint.</div>
+        <div class="examples" id="examples"></div>
+      </div>
+    </div>
+    <div class="composer"><div class="composer-in">
+      <div class="attach" id="attach"></div>
+      <div class="row">
+        <textarea id="q" placeholder="Describe the task…  (Ctrl+Enter to run)"></textarea>
+        <input type="file" id="file" multiple hidden>
+        <button class="btn ghost" id="pick" type="button">Attach</button>
+        <button class="btn" id="go" type="button">Run</button>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="view" id="v-kb">
+    <h2 class="title">Knowledge base</h2>
+    <p class="sub">Manuals, SOPs and past correspondence the assistant can search and cite. Documents are indexed in a local database on this machine.</p>
+    <div class="card"><h3>Add documents</h3>
+      <input type="file" id="kbfile" multiple hidden>
+      <button class="btn" id="kbpick">Choose files</button> <span class="dim" id="kbmsg"></span></div>
+    <div class="card"><h3>Indexed documents</h3><div class="tablewrap" id="kblist"></div></div>
+    <div class="card"><h3>Test a search</h3>
+      <div class="row"><input type="text" id="kbq" placeholder="e.g. hot work permit validity"><button class="btn" id="kbgo">Search</button></div>
+      <div id="kbhits"></div></div>
+  </section>
+
+  <section class="view" id="v-agents">
+    <h2 class="title">Agents</h2>
+    <p class="sub">Multi-step tasks are planned and handed between these agents. Each has one job, sees only the tools for that job, and its result must pass the listed checks before the next agent uses it. A reviewer compares the finished work with the request. Agents are defined in <code>config/agents.yaml</code>.</p>
+    <div class="card"><div class="tablewrap" id="agentlist"></div></div>
+  </section>
+
+  <section class="view" id="v-models">
+    <h2 class="title">Models</h2>
+    <p class="sub">The router picks a model for each task from this registry. A model is used only if it fits the hardware profile and is installed. New models are added in <code>config/models.yaml</code>.</p>
+    <div class="card"><div class="stats" id="profile"></div></div>
+    <div class="card"><div class="tablewrap" id="modellist"></div></div>
+  </section>
+
+  <section class="view" id="v-net">
+    <h2 class="title">Network monitor</h2>
+    <p class="sub">Live view of every network connection opened by the workbench and the model server. Any connection to an address outside this machine is recorded and shown here.</p>
+    <div class="card"><div class="big" id="netbig"></div><div class="stats" id="netstats"></div></div>
+    <div class="card"><h3>Connections outside this machine (since start)</h3><div class="tablewrap" id="netext"></div></div>
+    <div class="card"><h3>Live connections</h3><div class="tablewrap" id="netlive"></div></div>
+    <div class="card"><h3>Egress test</h3>
+      <p class="sub">Deliberately tries to reach the internet from the model client and from the code sandbox, and reports whether each attempt was stopped.</p>
+      <button class="btn" id="canary">Run egress test</button>
+      <a class="btn ghost" href="/network/report" target="_blank" rel="noopener">Open evidence report</a>
+      <div class="tablewrap" id="canaryout" style="margin-top:10px"></div></div>
+    <div class="card"><h3>Firewall lockdown test</h3>
+      <p class="sub">Run <code>lockdown.bat</code> to block all outbound traffic from the model server and the workbench with Windows Firewall. This test then makes one deliberate outbound attempt from the workbench itself. Without the lockdown the attempt succeeds, which is expected.</p>
+      <button class="btn ghost" id="fwtest">Test the firewall lockdown</button> <span id="fwout"></span></div>
+    <div class="card"><h3>What this does and does not prove</h3>
+      <div class="dim">The monitor observes the workbench and model-server processes on this machine. Code run by the agent executes in a Docker container with networking disabled, which the egress test checks. For deployment, add an outbound firewall rule or a physical air gap as the enforcing control.</div></div>
+  </section>
+
+  <section class="view" id="v-audit">
+    <h2 class="title">Audit log</h2>
+    <p class="sub">Every routing decision, model switch, tool call and answer, newest first.</p>
+    <div class="card"><div class="tablewrap" id="auditlist"></div></div>
+  </section>
+
+  <section class="view" id="v-check">
+    <h2 class="title">System check</h2>
+    <p class="sub">Verifies every function on this machine: packages, hardware, model server, installed models, sandbox, file types, knowledge base and network. The full check also calls each model and runs one agent task; it takes a few minutes.</p>
+    <div class="card">
+      <button class="btn" id="chk-quick">Quick check</button>
+      <button class="btn ghost" id="chk-full">Full check (uses the models)</button>
+      <span class="dim" id="chk-msg"></span>
+    </div>
+    <div class="card"><div class="tablewrap" id="chk-out"><div class="dim">Not run yet.</div></div></div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e[k] = v; else e.setAttribute(k, v); }
+  for (const k of kids) if (k != null) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return e;
+}
+function table(cols, rows, emptyText) {
+  if (!rows.length) return h('div', { class: 'dim' }, emptyText || 'Nothing to show.');
+  const t = h('table', {}, h('tr', {}, ...cols.map(c => h('th', {}, c[0]))));
+  for (const r of rows) t.append(h('tr', {}, ...cols.map(c => { const v = c[1](r); return v && v.nodeType ? h('td', {}, v) : h('td', { class: c[2] || '' }, v ?? ''); })));
+  return t;
+}
+const yesno = (b, y = 'Yes', n = 'No') => h('span', { class: b ? 'yes' : 'no' }, b ? y : n);
+const api = (path, opt) => fetch(path, opt).then(async r => { if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText); return r.json(); });
+
+// ---- navigation ----
+async function loadAgents() {
+  const names = (list) => list.map(x => x.replace(/_/g, ' ')).join(', ');
+  $('agentlist').replaceChildren(table([['Agent', a => h('b', {}, a.title)], ['Job', a => a.job], ['Tools it can use', a => a.tools.join(', '), 'mono'],
+    ['Result must pass', a => names(a.checks)], ['Model on this machine', a => a.model || 'none installed', 'mono']], await api('/agents')));
+}
+const titles = { work: 'Workbench', kb: 'Knowledge base', agents: 'Agents', models: 'Models', net: 'Network monitor', audit: 'Audit log', check: 'System check' };
+const loaders = { kb: loadKb, agents: loadAgents, models: loadModels, net: loadNet, audit: loadAudit };
+let view = 'work';
+function go(v) {
+  view = v;
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+  $('heading').textContent = titles[v];
+  if (loaders[v]) loaders[v]();
+}
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => go(b.dataset.v));
+$('pill').onclick = () => go('net');
+
+// ---- workbench ----
+const EXAMPLES = [
+  'Read the attached inspection report, pull out the key findings and draft an approval note as a Word file.',
+  'Write a Python function for pipe pressure drop (Darcy-Weisbach) with unit tests, and run the tests.',
+  'List the equipment and instrument tags in the attached drawing and save them as an Excel sheet.',
+];
+EXAMPLES.forEach(t => $('examples').append(h('button', { onclick: () => { $('q').value = t; $('q').focus(); } }, t)));
+
+// One conversation = one session id: follow-up messages see the earlier turns and files.
+const newSession = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+let session = newSession();
+const emptyState = $('empty');
+$('newchat').onclick = () => {
+  if ($('go').disabled) return;
+  session = newSession();
+  $('thread').replaceChildren(emptyState);
+  go('work'); $('q').focus();
+};
+
+let pending = [];
+function drawAttach() {
+  $('attach').replaceChildren(...pending.map((f, i) => h('span', {}, f.name, h('button', { title: 'Remove', onclick: () => { pending.splice(i, 1); drawAttach(); } }, '✕'))));
+}
+$('pick').onclick = () => $('file').click();
+$('file').onchange = (e) => { pending.push(...e.target.files); e.target.value = ''; drawAttach(); };
+$('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) run(); });
+$('go').onclick = run;
+
+function step(tag, title, body, cls) {
+  const d = h('details', {}, h('summary', {}, h('span', { class: 'tag ' + (cls || '') }, tag), title));
+  if (body) d.append(h('pre', {}, body));
+  return d;
+}
+
+async function run() {
+  const message = $('q').value.trim();
+  if (!message || $('go').disabled) return;
+  emptyState.remove();
+  const t0 = Date.now();
+  const files = pending; pending = []; drawAttach(); $('q').value = '';
+  $('go').disabled = true;
+  const thread = $('thread');
+  thread.append(h('div', { class: 'msg user' }, message + (files.length ? '\n📎 ' + files.map(f => f.name).join(', ') : '')));
+  const head = h('div', { class: 'run-head' }), steps = h('div', { class: 'steps' }), busy = h('div', { class: 'busy' }, 'Uploading…');
+  const card = h('div', { class: 'msg run' }, head, steps, busy);
+  thread.append(card); card.scrollIntoView({ block: 'end' });
+  const uploaded = new Set(files.map(f => f.name));
+  let lastCall = null, taskDir = null;
+  const stages = {};
+
+  const show = (e) => {
+    const t = e.type;
+    const who = e.agent ? stages[e.agent]?.title + ' · ' : '';
+    if (t === 'route') {
+      taskDir = e.workspace;
+      head.append(h('span', { class: 'chip model' }, e.model),
+                  h('span', { class: 'chip' }, e.mode === 'team' ? 'agent team' : e.capability + ' task'),
+                  h('span', { class: 'chip' }, e.complexity + ' complexity'), h('div', { class: 'reason' }, e.reason));
+      busy.textContent = 'Working… (the first reply is slower while the model loads)';
+    } else if (t === 'plan') {
+      const strip = h('div', { class: 'plan' }, h('span', { class: 'dim' }, e.source === 'planner' ? 'Plan:' : 'Plan (standard):'));
+      e.steps.forEach((s, i) => {
+        const chip = h('span', { class: 'stage', title: s.goal }, s.title);
+        stages[s.agent] = { chip, title: s.title };
+        if (i) strip.append(h('span', { class: 'dim' }, '→'));
+        strip.append(chip);
+      });
+      head.append(strip);
+    } else if (t === 'agent_start') {
+      if (stages[e.agent]) stages[e.agent].chip.className = 'stage active';
+      head.querySelector('.model').textContent = e.model;
+      busy.textContent = `${e.title} is working…`;
+      steps.append(h('div', { class: 'agent-head' }, h('b', {}, e.title), ' — ' + e.goal, h('span', { class: 'chip' }, e.model)));
+    } else if (t === 'agent_done') {
+      const ok = !e.error && !e.unverified;
+      if (stages[e.agent]) stages[e.agent].chip.className = 'stage ' + (ok ? 'done' : 'bad');
+      const body = e.error ? e.error : [e.summary, ...(e.facts || []).map(f => '• ' + f), e.unverified ? 'Not verified: ' + e.unverified : null].filter(Boolean).join('\n');
+      steps.append(step(ok ? 'result' : 'problem', `${e.title} ${e.error ? 'failed' : 'finished'}`, body, ok ? '' : 'bad'));
+    } else if (t === 'review') {
+      const text = e.verdict === 'fix' ? 'Reviewer asked for a correction' : e.verdict === 'pass' ? 'Review passed' : 'Review found unverified work';
+      const lines = e.checks.map(c => `${c.agent}: ${c.ok ? 'checks passed' : c.problem}`);
+      if (e.comment) lines.push("Reviewer's comment (not applied): " + e.comment);
+      steps.append(step('review', text, e.correction || lines.join('\n'), e.verdict === 'pass' ? '' : 'warn'));
+    } else if (t === 'ingest') {
+      steps.append(e.error ? step('input', e.file + ' could not be read', e.error, 'bad')
+        : step('input', `${e.file} — ${e.pages} page(s), read via ${e.via.join(', ')}`, e.preview));
+    } else if (t === 'tool_call') {
+      lastCall = step('step ' + e.step, `${who}${e.tool} — ${e.thought || ''}`, JSON.stringify(e.args, null, 2));
+      steps.append(lastCall);
+    } else if (t === 'tool_result') {
+      (lastCall || steps).append(h('pre', {}, e.result));
+    } else if (t === 'escalate' || t === 'fallback') {
+      steps.append(step(t === 'escalate' ? 'escalated' : 'fallback', `${e.from} → ${e.to}`, e.reason, 'warn'));
+      head.querySelector('.model').textContent = e.to;
+    } else if (t === 'invalid') steps.append(step('sent back', `${who}reply from ${e.model} was not accepted`, e.reply, 'warn'));
+    else if (t === 'stuck') steps.append(step('stuck', e.model + ' repeated itself; told to change approach', null, 'warn'));
+    else if (t === 'final') {
+      card.append(h('div', { class: 'answer' }, e.answer));
+      if (e.unverified) card.append(h('div', { class: 'answer err' }, 'Not verified: ' + e.unverified));
+    }
+    else if (t === 'error') card.append(h('div', { class: 'answer err' }, 'Stopped: ' + e.message));
+    else if (t === 'queued') busy.textContent = e.message;
+    card.scrollIntoView({ block: 'end' });
+  };
+
+  try {
+    const attachments = [];
+    for (const f of files) attachments.push((await api('/upload?name=' + encodeURIComponent(f.name), { method: 'POST', body: f })).path);
+    busy.textContent = 'Selecting a model…';
+    const r = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, attachments, session }) });
+    const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '';
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n'); buf = lines.pop();
+      for (const line of lines) if (line.trim()) show(JSON.parse(line));
+    }
+    const made = (await api('/files')).filter(f => taskDir && f.path.startsWith(taskDir + '/') && !uploaded.has(f.path.split('/').pop()));
+    if (made.length) card.append(h('div', { class: 'outputs' }, h('span', { class: 'dim' }, 'Files:'),
+      ...made.map(f => h('a', { href: '/files/' + encodeURI(f.path), download: '', title: f.path }, f.path.split('/').pop()))));
+  } catch (err) { card.append(h('div', { class: 'answer err' }, 'Error: ' + err.message)); }
+  busy.remove(); $('go').disabled = false;
+  card.append(h('div', { class: 'busy' }, `Finished in ${Math.round((Date.now() - t0) / 1000)} s`));
+  card.scrollIntoView({ block: 'end' });
+}
+
+// ---- knowledge base ----
+async function loadKb() {
+  const docs = await api('/kb');
+  $('kblist').replaceChildren(table([['Document', d => d.doc], ['Chunks', d => d.chunks],
+    ['', d => h('button', { class: 'btn ghost', onclick: async () => { await api('/kb/' + encodeURIComponent(d.doc), { method: 'DELETE' }); loadKb(); } }, 'Remove')]],
+    docs, 'No documents yet.'));
+}
+$('kbpick').onclick = () => $('kbfile').click();
+$('kbfile').onchange = async (e) => {
+  for (const f of e.target.files) {
+    $('kbmsg').textContent = `Indexing ${f.name}… (scanned pages take longer)`;
+    try { const r = await api('/kb/upload?name=' + encodeURIComponent(f.name), { method: 'POST', body: f }); $('kbmsg').textContent = `${r.doc}: ${r.pages} page(s), ${r.chunks} chunks`; }
+    catch (err) { $('kbmsg').textContent = `${f.name}: ${err.message}`; }
+  }
+  e.target.value = ''; loadKb();
+};
+$('kbgo').onclick = async () => {
+  const hits = await api('/kb/search?q=' + encodeURIComponent($('kbq').value));
+  $('kbhits').replaceChildren(table([['Source', x => `${x.doc} p.${x.page}`], ['Passage', x => x.text]], hits, 'No matching passages.'));
+};
+$('kbq').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('kbgo').click(); });
+
+// ---- models ----
+async function loadModels() {
+  const m = await api('/models');
+  $('profile').replaceChildren(h('span', {}, 'Hardware profile: ', h('b', {}, m.profile)), h('span', {}, 'Memory budget for models: ', h('b', {}, m.vram_gb + ' GB')),
+    h('span', {}, 'Measured from: ', h('b', {}, m.device)), h('span', {}, 'Recommended here: ', h('b', {}, m.recommended.join(', ') || 'none')));
+  $('modellist').replaceChildren(table([
+    ['Model', x => x.id, 'mono'], ['Used for', x => x.capabilities.join(', ') + (x.escalation_only ? ' (last resort)' : '')],
+    ['Size tier', x => x.tier], ['GPU memory', x => x.vram_gb + ' GB'], ['Fits this hardware', x => yesno(x.fits)],
+    ['Installed', x => yesno(x.available)], ['Runs via', x => x.provider]], m.models));
+}
+
+// ---- network ----
+let net = null;
+async function pollNet() {
+  try {
+    net = await api('/network');
+    const p = $('pill');
+    p.className = 'pill ' + (net.sovereign ? 'ok' : 'bad');
+    p.textContent = net.sovereign ? 'No external connections' : `${net.external_count} external connection(s) detected`;
+    if (view === 'net') drawNet();
+  } catch { $('pill').className = 'pill bad'; $('pill').textContent = 'Monitor unreachable'; }
+}
+function loadNet() { if (net) drawNet(); pollNet(); }
+function drawNet() {
+  $('netbig').className = 'big ' + (net.sovereign ? 'ok' : 'bad');
+  $('netbig').textContent = net.sovereign ? 'No data has left this machine' : `${net.external_count} connection(s) to external addresses detected`;
+  $('netstats').replaceChildren(h('span', {}, 'Monitoring since ', h('b', {}, net.since)), h('span', {}, 'Checks run: ', h('b', {}, net.samples)),
+    h('span', {}, 'Live connections: ', h('b', {}, net.connections.length)), h('span', {}, 'Blocked attempts: ', h('b', {}, net.blocked.length)));
+  $('netext').replaceChildren(table([['Process', x => x.process], ['Remote address', x => x.remote, 'mono'], ['Where', x => h('span', { class: x.scope === 'external' ? 'no' : 'dim' }, x.scope)],
+    ['First seen', x => x.first_seen], ['Last seen', x => x.last_seen], ['Times seen', x => x.times_seen]], net.non_local_seen, 'None. Every connection so far has stayed on this machine.'));
+  $('netlive').replaceChildren(table([['Process', x => x.process], ['PID', x => x.pid], ['Remote address', x => x.remote, 'mono'],
+    ['Where', x => h('span', { class: x.scope === 'this machine' ? 'yes' : 'no' }, x.scope)], ['State', x => x.status]], net.connections, 'No open connections.'));
+}
+$('canary').onclick = async () => {
+  $('canary').disabled = true; $('canaryout').textContent = 'Running…';
+  try {
+    const r = await api('/network/canary', { method: 'POST' });
+    $('canaryout').replaceChildren(table([['Test', x => x.test], ['Result', x => yesno(x.blocked, 'Blocked', 'NOT blocked')], ['Detail', x => x.detail, 'mono']], r));
+  } catch (err) { $('canaryout').textContent = 'Error: ' + err.message; }
+  $('canary').disabled = false; pollNet();
+};
+
+$('fwtest').onclick = async () => {
+  $('fwout').textContent = 'Testing…';
+  try {
+    const r = await api('/network/firewall-test', { method: 'POST' });
+    $('fwout').replaceChildren(yesno(r.blocked, 'Blocked', 'Not blocked'), ' — ' + r.detail);
+  } catch (err) { $('fwout').textContent = 'Error: ' + err.message; }
+};
+
+// ---- audit ----
+async function loadAudit() {
+  const rows = (await api('/audit?n=200')).reverse();
+  const detail = (e) => { const { ts, session, type, ...rest } = e; const s = JSON.stringify(rest); return s.length > 260 ? s.slice(0, 260) + '…' : s; };
+  $('auditlist').replaceChildren(table([['Time', e => e.ts.replace('T', ' ')], ['Session', e => e.session, 'mono'], ['Event', e => e.type], ['Detail', detail, 'mono']], rows, 'No events yet.'));
+}
+
+// ---- system check ----
+async function runCheck(full) {
+  $('chk-quick').disabled = $('chk-full').disabled = true;
+  $('chk-msg').textContent = full ? 'Running the full check… this takes a few minutes.' : 'Running…';
+  try {
+    const r = await api('/doctor?full=' + full);
+    const cls = { PASS: 'yes', WARN: 'warnc', FAIL: 'no' };
+    $('chk-out').replaceChildren(table([['Check', x => x.check], ['Result', x => h('span', { class: cls[x.status] }, x.status)],
+      ['Detail', x => x.detail], ['How to fix', x => x.fix]], r));
+    const n = (s) => r.filter(x => x.status === s).length;
+    $('chk-msg').textContent = `${n('PASS')} passed, ${n('WARN')} warnings, ${n('FAIL')} failed`;
+  } catch (err) { $('chk-msg').textContent = 'Error: ' + err.message; }
+  $('chk-quick').disabled = $('chk-full').disabled = false;
+}
+$('chk-quick').onclick = () => runCheck(false);
+$('chk-full').onclick = () => runCheck(true);
+
+pollNet(); setInterval(pollNet, 3000);
+</script>
+</body>
+</html>

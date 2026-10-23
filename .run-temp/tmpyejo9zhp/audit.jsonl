@@ -1,0 +1,2 @@
+{"ts": "2026-10-08T08:46:54", "session": "acdaf57fd917", "type": "route", "mode": "single", "capability": "general", "complexity": "low", "model": "small", "reason": "general task, low complexity: lighter available model within 12 GB (workstation profile)", "workspace": "tasks/acdaf57fd917"}
+{"ts": "2026-10-08T08:46:54", "session": "acdaf57fd917", "type": "final", "model": "small", "steps": 1, "answer": "A flange joins pipes."}

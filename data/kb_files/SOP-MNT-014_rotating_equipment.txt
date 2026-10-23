@@ -1,0 +1,18 @@
+SOP-MNT-014: Rotating Equipment Maintenance Approval
+
+1. Purpose
+This procedure defines when rotating equipment must be taken out of service and who approves the repair.
+
+2. Vibration limits
+A pump with bearing vibration above the trip value of 7.1 mm/s RMS must be stopped within 24 hours.
+Operation between alarm (4.5 mm/s) and trip is allowed for at most 7 days with daily monitoring.
+
+3. Seal leakage
+Mechanical seal leakage above 10 drops per minute on hydrocarbon service requires changeover to the standby pump.
+
+4. Approval authority
+Repairs up to Rs 5 lakh are approved by the Maintenance Manager.
+Repairs above Rs 5 lakh and up to Rs 25 lakh are approved by the General Manager (Maintenance).
+
+5. Before work starts
+A cold work permit and positive isolation are required. The standby pump must be proven healthy before the changeover.

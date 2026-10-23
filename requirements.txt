@@ -1,0 +1,10 @@
+# Exact versions that were tested together (Python 3.11 and 3.12, Windows).
+# To take newer versions, change these, run check.bat, and rebuild the offline bundle.
+fastapi==0.142.2
+uvicorn==0.54.0
+pyyaml==6.0.3
+psutil==7.2.2
+pymupdf==1.28.2
+python-docx==1.2.0
+openpyxl==3.1.5
+python-pptx==1.0.2

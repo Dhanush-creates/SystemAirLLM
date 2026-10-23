@@ -1,0 +1,1 @@
+print(exec(open('calc.py').read()))

@@ -1,0 +1,10 @@
+{"ts": "2026-10-08T08:47:55", "session": "s1", "type": "route", "mode": "single", "capability": "general", "complexity": "low", "model": "small", "reason": "general task, low complexity: lighter available model within 12 GB (workstation profile)", "workspace": "tasks/s1"}
+{"ts": "2026-10-08T08:47:55", "session": "s1", "type": "tool_call", "step": 1, "model": "small", "tool": "write_file", "args": {"path": "hello.txt", "content": "hi"}, "thought": ""}
+{"ts": "2026-10-08T08:47:55", "session": "s1", "type": "tool_result", "step": 1, "tool": "write_file", "result": "wrote 2 characters to hello.txt"}
+{"ts": "2026-10-08T08:47:55", "session": "s1", "type": "final", "model": "small", "steps": 2, "answer": "Saved hello.txt."}
+{"ts": "2026-10-08T08:47:55", "session": "s1", "type": "route", "mode": "single", "capability": "general", "complexity": "low", "model": "small", "reason": "general task, low complexity: lighter available model within 12 GB (workstation profile)", "workspace": "tasks/s1"}
+{"ts": "2026-10-08T08:47:55", "session": "s1", "type": "final", "model": "small", "steps": 1, "answer": "Follow-up seen."}
+{"ts": "2026-10-08T08:47:55", "session": "s2", "type": "route", "mode": "single", "capability": "general", "complexity": "low", "model": "small", "reason": "general task, low complexity: lighter available model within 12 GB (workstation profile)", "workspace": "tasks/s2"}
+{"ts": "2026-10-08T08:47:55", "session": "s2", "type": "final", "model": "small", "steps": 1, "answer": "ok"}
+{"ts": "2026-10-08T08:47:56", "session": "s3", "type": "route", "mode": "single", "capability": "general", "complexity": "low", "model": "small", "reason": "general task, low complexity: lighter available model within 12 GB (workstation profile)", "workspace": "tasks/s3"}
+{"ts": "2026-10-08T08:47:56", "session": "s3", "type": "final", "model": "small", "steps": 1, "answer": "ok"}

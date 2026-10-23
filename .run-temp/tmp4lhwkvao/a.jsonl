@@ -1,0 +1,3 @@
+{"ts": "2026-10-08T08:46:52", "session": "fc9d13daf96c", "type": "route", "mode": "single", "capability": "general", "complexity": "low", "model": "small", "reason": "general task, low complexity: lighter available model within 12 GB (workstation profile)", "workspace": "tasks/fc9d13daf96c"}
+{"ts": "2026-10-08T08:46:52", "session": "fc9d13daf96c", "type": "invalid", "step": 1, "model": "small", "reply": "garbage"}
+{"ts": "2026-10-08T08:46:52", "session": "fc9d13daf96c", "type": "final", "model": "small", "steps": 2, "answer": "ok"}

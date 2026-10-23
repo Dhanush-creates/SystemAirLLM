@@ -1,0 +1,95 @@
+# Agent team. Adding an agent = adding an entry here.
+#   capability: which kind of model runs it (general | code)
+#   tools:      the only tools this agent can see
+#   checks:     named checks in workbench/agents.py that its result must pass
+#   order:      position in the pipeline
+agents:
+  reader:
+    title: Reader
+    order: 1
+    job: Extract the facts the task needs from the attached documents.
+    capability: general
+    tools: []   # the input layer has already read the documents; long ones arrive in parts
+    checks: [facts_present, numbers_grounded]
+    default_goal: List every finding in the attached documents that the task needs.
+    rules: |
+      You have no tools. The text of the attached documents is shown below the request, already read for you.
+      Reply with the final JSON straight away.
+      Give each finding as a separate fact: measurements with their limits, equipment tags, dates,
+      conclusions, recommended actions and costs. Copy numbers exactly as written.
+      If this part of the document holds nothing the task needs, give an empty facts list.
+
+  researcher:
+    title: Researcher
+    order: 2
+    job: Find the organisation's rules that apply to the task in the knowledge base.
+    capability: general
+    tools: [search_kb]
+    checks: [citations_real, numbers_grounded]
+    default_goal: Find the rules, limits and approval authority that apply to this task.
+    rules: |
+      Search with short keyword queries of 2 to 4 words. Try a second query if the first finds nothing useful.
+      Each fact is one rule that applies to the task, followed by its source exactly as search_kb returned it,
+      in the form: "<the rule in one sentence> [<document name as returned> p.<page>]".
+      If the knowledge base has nothing relevant, give an empty facts list and say so.
+
+  analyst:
+    title: Analyst
+    order: 3
+    job: Do the calculations the task needs and show every step.
+    capability: general
+    tools: [run_python]
+    checks: [code_ran, facts_present, numbers_grounded]
+    default_goal: Calculate what the task asks for, step by step.
+    rules: |
+      Compute everything with run_python and print every intermediate value with its unit.
+      The run_python tool description says which libraries are installed; use no others.
+      Each fact is one step, written as "name = value unit (formula)". The last fact is the result.
+      Use only numbers the tool printed.
+
+  coder:
+    title: Coder
+    order: 4
+    job: Write the code the task needs and prove it works.
+    capability: code
+    tools: [write_file, read_file, list_files, run_python, run_tests]
+    checks: [tests_passed]
+    default_goal: Write the code and its tests, and run the tests.
+    rules: |
+      Write code into files with write_file. Put tests in a file named test_<name>.py using unittest.
+      Run tests with run_tests; importing a test file does not run it.
+      If a test fails, work out whether the code or the expected value is wrong, fix it and run again.
+      The run_python tool description says which libraries are installed; use no others.
+      Facts: the files you wrote and the test result.
+
+  writer:
+    title: Writer
+    order: 5
+    job: Produce the requested document, spreadsheet or presentation from the fact sheet.
+    capability: general
+    tools: [make_approval_note, make_docx, make_xlsx, make_pptx]
+    checks: [file_created, files_grounded, note_complete]
+    default_goal: Create the requested file from the fact sheet.
+    rules: |
+      Create the real file with one tool call: make_approval_note for approval notes, make_docx for other
+      documents, make_xlsx for spreadsheets, make_pptx for presentations.
+      Use only what is in the request and the fact sheet. Keep knowledge-base sources as given.
+      Do not add statistics, percentages or claims that are not in the fact sheet; describe such points in words.
+      In an approval note, the approval_sought section must name the approving authority when the fact sheet gives one,
+      and the reference must be the report or document number from the fact sheet.
+      If your file is sent back, create it again under the same file name.
+      Facts: the name of the file you created.
+
+  responder:
+    title: Responder
+    order: 6
+    job: Answer the user's question from the fact sheet.
+    capability: general
+    tools: []
+    checks: [numbers_grounded]
+    default_goal: Answer the request completely, using the fact sheet.
+    rules: |
+      You have no tools. Reply with the final JSON straight away.
+      Your "final" text is the answer the user will read. Answer the question directly and completely, give the
+      relevant figures, and name the document or source each point comes from.
+      If the fact sheet does not contain the answer, say so plainly. Leave "facts" empty.

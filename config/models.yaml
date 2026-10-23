@@ -1,0 +1,50 @@
+# Model registry. Adding a model = adding an entry under `models`.
+# Tags are Ollama tags; confirm them when pulling.
+
+# auto = measure this machine (NVIDIA GPU memory, else half the system RAM).
+# Or name a profile below. Override with env WORKBENCH_PROFILE, or WORKBENCH_VRAM=<GB>.
+profile: auto
+profiles:
+  workstation: {vram_gb: 12}
+  server: {vram_gb: 96}
+
+sandbox: auto                 # auto | docker | local
+allow_private_network: false  # true = allow a GPU server on the LAN, never the internet
+
+providers:
+  ollama:
+    type: openai
+    base_url: http://127.0.0.1:11434/v1
+  # Optional: run a 70B-class model on a small GPU, one layer at a time. Very slow.
+  # Turn on with enabled: true (or env WORKBENCH_AIRLLM=1), `pip install airllm`,
+  # and point `paths` at a local folder holding the model weights.
+  airllm:
+    type: airllm
+    enabled: false
+    compression: 4bit
+    max_new_tokens: 512
+    paths:
+      "airllm/big": ""          # e.g. D:/models/Qwen2.5-72B-Instruct
+
+# tier: 1 = small ... 4 = 120B-class. vram_gb includes room for context.
+# context must match what the server really loads (Ollama defaults to 4096 on a 12 GB GPU;
+# raise it with OLLAMA_CONTEXT_LENGTH and then raise it here).
+# think: false switches off a model's hidden reasoning. Measured on qwen3:14b: 3 to 7 times faster with
+# the same results on the test tasks. The agent switches reasoning back on when a result is sent back.
+models:
+  # small models for laptops with little or no GPU memory
+  - {id: "qwen3:4b",          provider: ollama, capabilities: [general],       tier: 0, vram_gb: 4,  context: 4096, think: false}
+  - {id: "qwen2.5-coder:3b",  provider: ollama, capabilities: [code],          tier: 0, vram_gb: 3,  context: 4096}
+  - {id: "qwen3:8b",          provider: ollama, capabilities: [general],       tier: 1, vram_gb: 7,  context: 4096, think: false}
+  - {id: "qwen3:14b",         provider: ollama, capabilities: [general],       tier: 2, vram_gb: 11, context: 4096, think: false}
+  - {id: "qwen2.5-coder:7b",  provider: ollama, capabilities: [code],          tier: 1, vram_gb: 6,  context: 4096}
+  - {id: "qwen2.5-coder:14b", provider: ollama, capabilities: [code],          tier: 2, vram_gb: 11, context: 4096}
+  # vision models: the first available one in this list reads scans, drawings and photos
+  - {id: "qwen2.5vl:7b",      provider: ollama, capabilities: [vision],        tier: 1, vram_gb: 8,  context: 4096}
+  - {id: "gemma3:12b",        provider: ollama, capabilities: [vision],        tier: 2, vram_gb: 10, context: 4096}
+  - {id: "gemma3:4b",         provider: ollama, capabilities: [vision],        tier: 0, vram_gb: 5,  context: 4096}
+  # AirLLM: fits a small GPU but is slow, so it is only used when the models above fail
+  - {id: "airllm/big",        provider: airllm, capabilities: [general, code], tier: 4, vram_gb: 10, context: 8192, escalation_only: true}
+  # server profile only
+  - {id: "qwen3-coder:30b",   provider: ollama, capabilities: [code],          tier: 3, vram_gb: 24, context: 32768}
+  - {id: "gpt-oss:120b",      provider: ollama, capabilities: [general, code], tier: 4, vram_gb: 80, context: 65536}

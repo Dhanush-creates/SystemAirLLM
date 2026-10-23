@@ -1,0 +1,7 @@
+{"ts": "2026-10-04T01:07:47", "event": "blocked_attempt", "target": "https://1.1.1.1/v1", "detail": "blocked non-local endpoint 1.1.1.1 (1.1.1.1)"}
+{"ts": "2026-10-04T01:07:55", "event": "non_local_connection", "process": "python.exe", "pid": 10040, "remote": "1.1.1.1:443", "scope": "external", "status": "ESTABLISHED"}
+{"ts": "2026-10-04T01:07:55", "event": "deliberate_firewall_test", "test": "Outbound connection from the workbench process itself", "blocked": false, "detail": "the connection to 1.1.1.1:443 succeeded: no firewall lockdown is active"}
+{"ts": "2026-10-04T02:22:35", "event": "blocked_attempt", "target": "https://1.1.1.1/v1", "detail": "blocked non-local endpoint 1.1.1.1 (1.1.1.1)"}
+{"ts": "2026-10-04T02:22:36", "event": "deliberate_firewall_test", "test": "Outbound connection from the workbench process itself", "blocked": false, "detail": "the connection to 1.1.1.1:443 succeeded: no firewall lockdown is active"}
+{"ts": "2026-10-04T02:35:27", "event": "blocked_attempt", "target": "https://1.1.1.1/v1", "detail": "blocked non-local endpoint 1.1.1.1 (1.1.1.1)"}
+{"ts": "2026-10-04T02:35:30", "event": "deliberate_firewall_test", "test": "Outbound connection from the workbench process itself", "blocked": false, "detail": "the connection to 1.1.1.1:443 succeeded: no firewall lockdown is active"}
