@@ -1,0 +1,7 @@
+.venv/
+.venv-local/
+.run-temp/
+offline/OllamaSetup.exe
+offline/sandbox-image.tar
+*.pyc
+__pycache__/
