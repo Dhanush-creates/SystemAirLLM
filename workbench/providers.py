@@ -6,6 +6,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+import time
 from pathlib import Path
 from typing import Callable
 
@@ -24,6 +25,8 @@ class OpenAIProvider:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.no_think = set(no_think)  # models run with hidden reasoning switched off (registry: think: false)
+        self._models_cache: set[str] | None = None
+        self._models_cache_at = 0.0
 
     def _request(self, path: str, payload: dict | None = None, timeout: int | None = None) -> dict:
         req = urllib.request.Request(
@@ -69,9 +72,19 @@ class OpenAIProvider:
         raise error or OSError("the model returned an empty reply")
 
     def available(self, model: str) -> bool:
+        now = time.monotonic()
+        if self._models_cache is not None and now - self._models_cache_at < 5:
+            return model in self._models_cache
         try:
-            return model in {m["id"] for m in self._request("/models", timeout=5)["data"]}
+            data = self._request("/models", timeout=2).get("data")
+            if not isinstance(data, list):
+                raise ValueError("model server returned an invalid model list")
+            self._models_cache = {m["id"] for m in data if isinstance(m, dict) and isinstance(m.get("id"), str)}
+            self._models_cache_at = now
+            return model in self._models_cache
         except (OSError, KeyError, ValueError):
+            self._models_cache = set()
+            self._models_cache_at = now
             return False
 
 
